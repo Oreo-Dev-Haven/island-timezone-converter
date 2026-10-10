@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Island | Time Zone Converter</title>
+<style>
+  :root { color-scheme: dark; --bg:#100b18; --panel:#1b1228; --line:#49315f; --pink:#f3a6d7; --purple:#b58cff; --text:#fff7ff; --muted:#c7b7d2; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; font-family:Arial,Helvetica,sans-serif; color:var(--text); background:radial-gradient(ellipse at top,#321846 0,#160d21 45%,#0b0810 100%); padding:28px 16px; }
+  main { width:min(900px,100%); margin:0 auto; }
+  header { text-align:center; margin:10px 0 26px; }
+  .eyebrow { color:var(--pink); text-transform:uppercase; letter-spacing:.18em; font-size:.75rem; font-weight:700; }
+  h1 { margin:10px 0 8px; font-size:clamp(2rem,6vw,3.2rem); }
+  h1 span { color:var(--pink); }
+  .subtitle { color:var(--muted); line-height:1.5; margin:0 auto; max-width:620px; }
+  .panel { background:rgba(27,18,40,.94); border:1px solid var(--line); border-radius:20px; padding:22px; box-shadow:0 16px 50px #0005; margin-bottom:18px; }
+  h2 { font-size:1.1rem; margin:0 0 16px; }
+  .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  label { display:block; font-size:.86rem; color:var(--muted); margin-bottom:7px; }
+  input, select, button { width:100%; font:inherit; border-radius:11px; padding:12px; }
+  input, select { background:#100b18; color:var(--text); border:1px solid #62467a; }
+  button { cursor:pointer; border:0; background:linear-gradient(100deg,#b58cff,#f3a6d7); color:#210d2a; font-weight:800; margin-top:16px; }
+  button:hover { filter:brightness(1.07); }
+  .results { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .result { border:1px solid #49315f; background:#130d1d; border-radius:14px; padding:16px; min-width:0; }
+  .result .city { color:var(--pink); font-weight:700; font-size:.9rem; }
+  .result .time { font-size:1.6rem; font-weight:800; margin:9px 0 5px; overflow-wrap:anywhere; }
+  .result .date { color:var(--muted); font-size:.88rem; }
+  .hint { color:var(--muted); font-size:.85rem; line-height:1.5; margin:12px 0 0; }
+  .quick { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .quick button { width:auto; margin:0; padding:8px 11px; font-size:.82rem; background:#30203f; color:var(--text); border:1px solid #62467a; }
+  footer { text-align:center; color:#9f8cad; font-size:.8rem; padding:8px 0 18px; }
+  @media(max-width:600px) { .form-grid,.results { grid-template-columns:1fr; } .panel { padding:17px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Island Events Team presents</div>
+    <h1>🌙 The Island <span>Timezoner</span> 🌎</h1>
+    <p class="subtitle">Plan your events without the time-zone confusion. Choose an event date and Eastern Time, then see what time it is for the team around the world.</p>
+  </header>
+
+  <section class="panel">
+    <h2>🎃 Convert an Event Time</h2>
+    <div class="form-grid">
+      <div>
+        <label for="eventDate">Event date</label>
+        <input id="eventDate" type="date">
+      </div>
+      <div>
+        <label for="eventTime">Event time (Eastern Time)</label>
+        <input id="eventTime" type="time" value="20:00">
+      </div>
+      <div>
+        <label for="timezone">Team member's time zone</label>
+        <select id="timezone"></select>
+      </div>
+      <div>
+        <label for="extraTimezone">Compare with another time zone</label>
+        <select id="extraTimezone"></select>
+      </div>
+    </div>
+    <button id="convert">Convert Event Time ✨</button>
+    <div class="quick" aria-label="Quick event times">
+      <button type="button" data-time="13:30">1:30 PM</button>
+      <button type="button" data-time="19:30">7:30 PM</button>
+      <button type="button" data-time="21:00">9:00 PM</button>
+      <button type="button" data-time="22:30">10:30 PM</button>
+    </div>
+    <p class="hint">The converter automatically accounts for daylight saving time based on the date you choose. Eastern Time may be EST or EDT depending on the season.</p>
+  </section>
+
+  <section class="panel">
+    <h2>🕰️ Your Converted Times</h2>
+    <div class="results" id="results" aria-live="polite">
+      <div class="result"><div class="city">Eastern Time</div><div class="time">8:00 PM</div><div class="date">Choose a date and convert.</div></div>
+      <div class="result"><div class="city">Selected time zone</div><div class="time">—</div><div class="date">Your converted time will appear here.</div></div>
+    </div>
+  </section>
+  <footer>Made for The Island Events Team • Always confirm the date when scheduling across midnight.</footer>
+</main>
+<script>
+const zones = [
+  ["Eastern Time (New York / Toronto)", "America/New_York"],
+  ["Central Time (Chicago / Winnipeg)", "America/Chicago"],
+  ["Mountain Time (Denver / Calgary)", "America/Denver"],
+  ["Pacific Time (Los Angeles / Vancouver)", "America/Los_Angeles"],
+  ["Alaska (Anchorage)", "America/Anchorage"],
+  ["Hawaii (Honolulu)", "Pacific/Honolulu"],
+  ["London (UK)", "Europe/London"],
+  ["Paris / Berlin / Rome", "Europe/Paris"],
+  ["Athens", "Europe/Athens"],
+  ["Dubai", "Asia/Dubai"],
+  ["India (New Delhi)", "Asia/Kolkata"],
+  ["Singapore", "Asia/Singapore"],
+  ["Tokyo", "Asia/Tokyo"],
+  ["Seoul", "Asia/Seoul"],
+  ["Sydney", "Australia/Sydney"],
+  ["Auckland", "Pacific/Auckland"],
+  ["São Paulo", "America/Sao_Paulo"],
+  ["Mexico City", "America/Mexico_City"],
+  ["Jamaica", "America/Jamaica"],
+  ["South Africa (Johannesburg)", "Africa/Johannesburg"],
+  ["UTC", "UTC"]
+];
+const dateInput = document.getElementById('eventDate');
+const timeInput = document.getElementById('eventTime');
+const zoneInput = document.getElementById('timezone');
+const extraInput = document.getElementById('extraTimezone');
+const results = document.getElementById('results');
+
+function fillZones(select, defaultZone) {
+  zones.forEach(([label, value]) => {
+    const option = document.createElement('option');
+    option.value = value; option.textContent = label;
+    select.appendChild(option);
+  });
+  select.value = defaultZone;
+}
+fillZones(zoneInput, 'America/Los_Angeles');
+fillZones(extraInput, 'Europe/London');
+
+const now = new Date();
+const localDateParts = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'
+}).formatToParts(now);
+const dateMap = Object.fromEntries(localDateParts.map(p => [p.type,p.value]));
+dateInput.value = `${dateMap.year}-${dateMap.month}-${dateMap.day}`;
+
+function getParts(date, zone) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short'
+  }).formatToParts(date);
+  return Object.fromEntries(parts.map(p => [p.type,p.value]));
+}
+function formatZone(date, zone) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short'
+  }).format(date);
+}
+function getDateLabel(date, zone) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  }).format(date);
+}
+// Convert a wall-clock time in a named time zone to a UTC Date, iterating to account for offsets/DST.
+function zonedWallTimeToDate(year, month, day, hour, minute, zone) {
+  const target = Date.UTC(year, month - 1, day, hour, minute);
+  let guess = target;
+  for (let i = 0; i < 4; i++) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date(guess));
+    const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
+    const represented = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+    guess += target - represented;
+  }
+  return new Date(guess);
+}
+function convert() {
+  if (!dateInput.value || !timeInput.value) {
+    results.innerHTML = '<div class="result">Please choose both an event date and time.</div>';
+    return;
+  }
+  const [year, month, day] = dateInput.value.split('-').map(Number);
+  const [hour, minute] = timeInput.value.split(':').map(Number);
+  const eventDate = zonedWallTimeToDate(year, month, day, hour, minute, 'America/New_York');
+  const selectedZone = zoneInput.value;
+  const compareZone = extraInput.value;
+  const items = [
+    ['Eastern Time (event time)', 'America/New_York'],
+    [zones.find(z => z[1] === selectedZone)[0], selectedZone],
+    [zones.find(z => z[1] === compareZone)[0], compareZone]
+  ];
+  const unique = [];
+  items.forEach(item => { if (!unique.some(x => x[1] === item[1])) unique.push(item); });
+  results.innerHTML = unique.map(([label, zone]) => `
+    <div class="result">
+      <div class="city">${label}</div>
+      <div class="time">${formatZone(eventDate, zone)}</div>
+      <div class="date">${getDateLabel(eventDate, zone)}</div>
+    </div>`).join('');
+}
+document.getElementById('convert').addEventListener('click', convert);
+document.querySelectorAll('[data-time]').forEach(button => button.addEventListener('click', () => {
+  timeInput.value = button.dataset.time;
+  convert();
+}));
+[dateInput, timeInput, zoneInput, extraInput].forEach(el => el.addEventListener('change', convert));
+convert();
+</script>
+</body>
+</html>
